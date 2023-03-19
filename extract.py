@@ -26,15 +26,27 @@ minor_linker_version = pe.OPTIONAL_HEADER.MinorLinkerVersion
 size_of_code = pe.OPTIONAL_HEADER.SizeOfCode
 size_of_initialized_data = pe.OPTIONAL_HEADER.SizeOfInitializedData
 size_of_uninitialized_data = pe.OPTIONAL_HEADER.SizeOfUninitializedData
-resources_nb = len(pe.resources)
+resources_nb = len(pe.DIRECTORY_ENTRY_RESOURCE.entries)
 resources_mean_entropy = pe.sections[-1].get_entropy()
-resources_min_entropy = min([s.get_entropy() for s in pe.sections[-1].subsections])
-resources_max_entropy = max([s.get_entropy() for s in pe.sections[-1].subsections])
-resources_mean_size = sum([r[2] for r in pe.resources])/len(pe.resources)
-resources_min_size = min([r[2] for r in pe.resources])
-resources_max_size = max([r[2] for r in pe.resources])
+
+if hasattr(pe.sections[-1], 'subsections'):
+    resources_min_entropy = min([s.get_entropy() for s in pe.sections[-1].subsections])
+    resources_max_entropy = max([s.get_entropy() for s in pe.sections[-1].subsections])
+else:
+    resources_min_entropy = pe.sections[-1].get_entropy()
+    resources_max_entropy = pe.sections[-1].get_entropy()
+
+if hasattr(pe, 'resources'):
+    resources_mean_size = sum([r[2] for r in pe.resources])/len(pe.resources)
+    resources_min_size = min([r[2] for r in pe.resources])
+    resources_max_size = max([r[2] for r in pe.resources])
+else:
+    resources_mean_size = 0
+    resources_min_size = 0
+    resources_max_size = 0
+
 load_configuration_size = pe.OPTIONAL_HEADER.DATA_DIRECTORY[pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG']].Size
-version_information_size = pe.VS_FIXEDFILEINFO.StructureSize
+version_information_size = pe.FileInfo[0].sizeof()
 
 # Write the information to a CSV file
 with open('pe_file_info.csv', mode='w', newline='') as file:
